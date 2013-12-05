@@ -30,10 +30,20 @@ http://www.gnu.org/copyleft/gpl.html
 * `cmake` - version 2.8 or later
 * `boost` - with `system` and `thread` components
 
+On Debian-based systems (like Ubuntu), this will install the required
+components:
+
+    $ sudo apt-get install cmake libboost-dev libboost-system-dev libboost-thread-dev
+
 ### Optional
 
 * `git` - if you want to clone directly from the repository
 * `doxygen` - if you want to build the documentation
+
+On Debian-based systems (like Ubuntu), this will install the optional
+components:
+
+    $ sudo apt-get install git doxygen
 
 ## Compiling and Installing
 
@@ -43,7 +53,7 @@ http://www.gnu.org/copyleft/gpl.html
     $ cd build
     $ cmake ../NatNetLinux
     $ make
-    $ make install
+    $ sudo make install
 
 ## Examples
 
