@@ -54,6 +54,16 @@ public:
       return packet;
    }
    
+   /*!
+    * \brief Send packet over the series of tubes.
+    * \param sd Socket to use (already bound to an address)
+    */
+   int send(int sd) const
+   {
+      // Have to prepend '::' to avoid conflicting with NatNetPacket::send().
+      return ::send(sd, _data, 4+nDataBytes(), 0);
+   }
+   
    /*! \brief Send packet over the series of tubes.
     * \param sd Socket to use
     * \param destAddr Address to which to send the packet

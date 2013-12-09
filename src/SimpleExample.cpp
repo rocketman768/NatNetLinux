@@ -194,13 +194,6 @@ int main(int argc, char* argv[])
    serverCommands.sin_port = htons(PORT_COMMAND);
    serverCommands.sin_addr.s_addr = serverAddress;
    
-   // Use this socket address to receive data from the server.
-   struct sockaddr_in serverData;
-   memset(&serverData, 0, sizeof(serverData));
-   serverData.sin_family = AF_INET;
-   serverData.sin_port = htons(PORT_DATA);
-   serverData.sin_addr.s_addr = serverAddress;
-   
    sdCommand = createCommandSocket( localAddress );
    sdData = createDataSocket( localAddress );
    
