@@ -520,9 +520,39 @@ public:
    //! \brief Copy constructor.
    MocapFrame( MocapFrame const& other ) :
       _nnMajor(other._nnMajor),
-      _nnMinor(other._nnMinor)
+      _nnMinor(other._nnMinor),
+      _frameNum(other._frameNum),
+      _numMarkerSets(other._numMarkerSets),
+      _markerSet(other._markerSet),
+      _uidMarker(other._uidMarker),
+      _numRigidBodies(other._numRigidBodies),
+      _rBodies(other._rBodies),
+      _skel(other._skel),
+      _labeledMarkers(other._labeledMarkers),
+      _latency(other._latency),
+      _timecode(other._timecode),
+      _subTimecode(other._subTimecode)
    {
       
+   }
+   
+   MocapFrame const& operator=( MocapFrame const& other )
+   {
+      _nnMajor = other._nnMajor;
+      _nnMinor = other._nnMinor;
+      _frameNum = other._frameNum;
+      _numMarkerSets = other._numMarkerSets;
+      _markerSet = other._markerSet;
+      _uidMarker = other._uidMarker;
+      _numRigidBodies = other._numRigidBodies;
+      _rBodies = other._rBodies;
+      _skel = other._skel;
+      _labeledMarkers = other._labeledMarkers;
+      _latency = other._latency;
+      _timecode = other._timecode;
+      _subTimecode = other._subTimecode;
+      
+      return *this;
    }
    
    //! \brief Frame number. Not always consecutive, but strictly increasing in time.

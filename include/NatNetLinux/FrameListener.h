@@ -98,7 +98,6 @@ private:
             MocapFrame mFrame(_nnMajor,_nnMinor);
             mFrame.unpack(nnp.rawPayloadPtr());
             _frames.push_back(mFrame);
-            std::cout << mFrame << std::endl;
          }
       }
    }

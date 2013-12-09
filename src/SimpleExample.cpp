@@ -216,8 +216,25 @@ int main(int argc, char* argv[])
    commandListener.getNatNetVersion(natNetMajor, natNetMinor);
    std::cout << "Main thread got version " << static_cast<int>(natNetMajor) << "." << static_cast<int>(natNetMinor) << std::endl;
    
+   // Start up a FrameListener, and get a reference to its output rame buffer.
    FrameListener frameListener(sdData, natNetMajor, natNetMinor);
    frameListener.start();
+   boost::circular_buffer<MocapFrame>& frameBuf = frameListener.frames();
+   
+   // This infinite loop simulates a "worker" thread that reads the frame
+   // buffer each time through.
+   while(true)
+   {
+      while( !frameBuf.empty() )
+      {
+         MocapFrame frame = frameBuf.front();
+         std::cout << frame << std::endl;
+         frameBuf.pop_front();
+      }
+      
+      // Sleep for a little while to simulate work :)
+      usleep(100);
+   }
    
    // Wait for listener threads to finish. Probably never. Just CTRL-C.
    frameListener.join();
