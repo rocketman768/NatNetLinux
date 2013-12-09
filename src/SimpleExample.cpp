@@ -156,13 +156,6 @@ int createDataSocket( uint32_t inAddr )
    return sd;
 }
 
-//! \brief Convert internet address to string.
-void addrToStr( char* str, size_t len, const struct in_addr addr )
-{
-   const char* s = inet_ntoa( addr );
-   strncpy( str, s, len );
-}
-
 void readOpts( uint32_t& localAddress, uint32_t& serverAddress, int argc, char* argv[] )
 {
    if( argc > 2 )
