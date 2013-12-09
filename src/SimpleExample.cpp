@@ -51,9 +51,10 @@ void helpAndExit()
  * \brief Creates a socket for communicating commands.
  * 
  * \param inAddr our local address
- * \returns socket descriptor bound to PORT_COMMAND and local address
+ * \param port command port, defaults to 1510
+ * \returns socket descriptor bound to \c port and \c inAddr
  */
-int createCommandSocket( uint32_t inAddr )
+int createCommandSocket( uint32_t inAddr, uint16_t port=1510 )
 {
    // Asking for a buffer of 1MB = 2^20 bytes. This is what NP does, but this
    // seems far too large on Linux systems where the max is usually something
@@ -74,7 +75,7 @@ int createCommandSocket( uint32_t inAddr )
    // Bind socket
    memset(&sockAddr, 0, sizeof(sockAddr));
    sockAddr.sin_family = AF_INET;
-   sockAddr.sin_port = htons(PORT_COMMAND);
+   sockAddr.sin_port = htons(port);
    //sockAddr.sin_port = htons(0);
    sockAddr.sin_addr.s_addr = inAddr;
    tmp = bind( sd, (struct sockaddr*)&sockAddr, sizeof(sockAddr) );
@@ -115,9 +116,11 @@ int createCommandSocket( uint32_t inAddr )
  * \c MULTICAST_ADDRESS.
  * 
  * \param inAddr our local address
+ * \param port port to bind to, defaults to 1511
+ * \param multicastAddr multicast address to subscribe to. Defaults to 239.255.42.99.
  * \returns socket bound as described above
  */
-int createDataSocket( uint32_t inAddr )
+int createDataSocket( uint32_t inAddr, uint16_t port=1511, uint32_t multicastAddr=inet_addr("239.255.42.99") )
 {
    int sd;
    int value;
@@ -138,12 +141,12 @@ int createDataSocket( uint32_t inAddr )
     // Bind the socket to a port.
    memset((char*)&localSock, 0, sizeof(localSock));
    localSock.sin_family = AF_INET;
-   localSock.sin_port = htons(PORT_DATA);
+   localSock.sin_port = htons(port);
    localSock.sin_addr.s_addr = INADDR_ANY;
    bind(sd, (struct sockaddr*)&localSock, sizeof(localSock));
    
    // Connect a local interface address to the multicast interface address.
-   group.imr_multiaddr.s_addr = inet_addr(MULTICAST_ADDRESS);
+   group.imr_multiaddr.s_addr = multicastAddr;
    group.imr_interface.s_addr = inAddr;
    tmp = setsockopt(sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&group, sizeof(group));
    if( tmp < 0 )
