@@ -33,7 +33,7 @@ http://www.gnu.org/copyleft/gpl.html
 On Debian-based systems (like Ubuntu), this will install the required
 components:
 
-    $ sudo apt-get install cmake libboost-dev libboost-system-dev libboost-thread-dev
+    $ sudo apt-get install cmake libboost-dev libboost-program-option-dev libboost-system-dev libboost-thread-dev
 
 ### Optional
 

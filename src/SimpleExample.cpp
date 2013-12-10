@@ -37,25 +37,34 @@
 #include <NatNetLinux/CommandListener.h>
 #include <NatNetLinux/FrameListener.h>
 
-void helpAndExit()
-{
-   std::cout
-      << "Usage:" << std::endl
-      << "   simple-example [local address] [server address]" << std::endl
-      << "   local address  - Local interface IPv4 address, e.g. 192.168.0.2" << std::endl
-      << "   server address - Server IPv4 address, e.g. 192.168.0.3" << std::endl;
-   exit(1);
-}
+#include <boost/program_options.hpp>
 
 void readOpts( uint32_t& localAddress, uint32_t& serverAddress, int argc, char* argv[] )
 {
-   if( argc > 2 )
+   namespace po = boost::program_options;
+   
+   po::options_description desc("simple-example: demonstrates using NatNetLinux\nOptions");
+   desc.add_options()
+      ("help", "Display help message")
+      ("local-addr,l", po::value<std::string>(), "Local IPv4 address")
+      ("server-addr,s", po::value<std::string>(), "Server IPv4 address")
+   ;
+   
+   po::variables_map vm;
+   po::store(po::parse_command_line(argc,argv,desc), vm);
+   
+   if(
+      argc < 5 || vm.count("help") ||
+      !vm.count("local-addr") ||
+      !vm.count("server-addr")
+   )
    {
-      localAddress = inet_addr(argv[1]);
-      serverAddress = inet_addr(argv[2]);
+      std::cout << desc << std::endl;
+      exit(1);
    }
-   else
-      helpAndExit();
+   
+   localAddress = inet_addr( vm["local-addr"].as<std::string>().c_str() );
+   serverAddress = inet_addr( vm["server-addr"].as<std::string>().c_str() );
 }
 
 int main(int argc, char* argv[])
