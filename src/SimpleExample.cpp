@@ -47,118 +47,6 @@ void helpAndExit()
    exit(1);
 }
 
-/*!
- * \brief Creates a socket for communicating commands.
- * 
- * \param inAddr our local address
- * \param port command port, defaults to 1510
- * \returns socket descriptor bound to \c port and \c inAddr
- */
-int createCommandSocket( uint32_t inAddr, uint16_t port=1510 )
-{
-   // Asking for a buffer of 1MB = 2^20 bytes. This is what NP does, but this
-   // seems far too large on Linux systems where the max is usually something
-   // like 256 kB.
-   const int rcvBufSize = 0x100000;
-   int sd;
-   int tmp;
-   socklen_t len;
-   struct sockaddr_in sockAddr;
-   
-   sd = socket(AF_INET, SOCK_DGRAM, 0);
-   if( sd < 0 )
-   {
-      std::cerr << "Could not open socket. Error: " << errno << std::endl;
-      exit(1);
-   }
-   
-   // Bind socket
-   memset(&sockAddr, 0, sizeof(sockAddr));
-   sockAddr.sin_family = AF_INET;
-   sockAddr.sin_port = htons(port);
-   //sockAddr.sin_port = htons(0);
-   sockAddr.sin_addr.s_addr = inAddr;
-   tmp = bind( sd, (struct sockaddr*)&sockAddr, sizeof(sockAddr) );
-   if( tmp < 0 )
-   {
-      std::cerr << "Could not bind socket. Error: " << errno << std::endl;
-      close(sd);
-      exit(1);
-   }
-   
-   int value = 1;
-   tmp = setsockopt( sd, SOL_SOCKET, SO_BROADCAST, (char*)&value, sizeof(value) );
-   if( tmp < 0 )
-   {
-      std::cerr << "Could not set socket to broadcast mode. Error: " << errno << std::endl;
-      close(sd);
-      exit(1);
-   }
-   
-   setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char*)&rcvBufSize, sizeof(rcvBufSize));
-   getsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char*)&tmp, &len);
-   if( tmp != rcvBufSize )
-   {
-      std::cerr << "Could not set receive buffer size. Asked for "
-         << rcvBufSize << "B got " << tmp << "B" << std::endl;
-      //close(sd);
-      //exit(1);
-   }
-   
-   return sd;
-}
-
-/*!
- * \brief Creates a socket to read data from the server.
- * 
- * The socket returned from this function is bound to \c PORT_DATA and
- * \c INADDR_ANY, and is added to the multicast group given by
- * \c MULTICAST_ADDRESS.
- * 
- * \param inAddr our local address
- * \param port port to bind to, defaults to 1511
- * \param multicastAddr multicast address to subscribe to. Defaults to 239.255.42.99.
- * \returns socket bound as described above
- */
-int createDataSocket( uint32_t inAddr, uint16_t port=1511, uint32_t multicastAddr=inet_addr("239.255.42.99") )
-{
-   int sd;
-   int value;
-   int tmp;
-   struct sockaddr_in localSock;
-   struct ip_mreq group;
-   
-   sd = socket(AF_INET, SOCK_DGRAM, 0);
-   value = 1;
-   tmp = setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char*)&value, sizeof(value));
-   if( tmp < 0 )
-   {
-      std::cerr << "ERROR: Could not set socket option." << std::endl;
-      close(sd);
-      return -1;
-   }
-   
-    // Bind the socket to a port.
-   memset((char*)&localSock, 0, sizeof(localSock));
-   localSock.sin_family = AF_INET;
-   localSock.sin_port = htons(port);
-   localSock.sin_addr.s_addr = INADDR_ANY;
-   bind(sd, (struct sockaddr*)&localSock, sizeof(localSock));
-   
-   // Connect a local interface address to the multicast interface address.
-   group.imr_multiaddr.s_addr = multicastAddr;
-   group.imr_interface.s_addr = inAddr;
-   tmp = setsockopt(sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&group, sizeof(group));
-   if( tmp < 0 )
-   {
-      std::cerr << "ERROR: Could not add the interface to the multicast group." << std::endl;
-      close(sd);
-      return -1;
-   }
-   
-   return sd;
-}
-
 void readOpts( uint32_t& localAddress, uint32_t& serverAddress, int argc, char* argv[] )
 {
    if( argc > 2 )
@@ -190,8 +78,8 @@ int main(int argc, char* argv[])
    serverCommands.sin_port = htons(PORT_COMMAND);
    serverCommands.sin_addr.s_addr = serverAddress;
    
-   sdCommand = createCommandSocket( localAddress );
-   sdData = createDataSocket( localAddress );
+   sdCommand = NatNet::createCommandSocket( localAddress );
+   sdData = NatNet::createDataSocket( localAddress );
    
    CommandListener commandListener(sdCommand);
    commandListener.start();
