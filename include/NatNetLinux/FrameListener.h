@@ -24,6 +24,8 @@
 #include <NatNetLinux/NatNetSender.h>
 #include <boost/thread.hpp>
 #include <boost/circular_buffer.hpp>
+#include <boost/interprocess/shared_memory_object.hpp>
+#include <boost/interprocess/mapped_region.hpp>
 
 /*!
  * \brief Class to listen for MocapFrame data.
@@ -46,19 +48,44 @@ public:
     * \param nnMajor NatNet major version.
     * \param nnMinor NatNet minor version.
     * \param bufferSize number of frames in the \c frames() buffer.
+    * \param sharedMemoryName if given, places the \c frames() buffer in a
+    *        boost \c shared_memory_object of the given name.
     */
-   FrameListener(int sd = -1, unsigned char nnMajor=0, unsigned char nnMinor=0, size_t bufferSize=64 ) :
+   FrameListener(
+      int sd = -1,
+      unsigned char nnMajor=0,
+      unsigned char nnMinor=0,
+      size_t bufferSize=64,
+      const char* sharedMemoryName=""
+   ) :
       _thread(0),
       _sd(sd),
       _nnMajor(nnMajor),
       _nnMinor(nnMinor),
-      _frames(bufferSize)
+      _shmName(sharedMemoryName)
    {
+      using namespace boost::interprocess;
+      
+      if( _shmName[0] == '\0' )
+         _frames = new boost::circular_buffer<MocapFrame>(bufferSize);
+      else
+      {
+         shared_memory_object shm(create_only, _shmName, read_write);
+         shm.truncate(1<<16); // NOTE: is 65k enough?
+         mapped_region region(shm, read_write);
+         
+         _frames = new(region.get_address()) boost::circular_buffer<MocapFrame>(bufferSize);
+      }
    }
    
    ~FrameListener()
    {
+      using namespace boost::interprocess;
+      
       delete _thread;
+      delete _frames;
+      if( _shmName[0] != '\0' )
+         shared_memory_object::remove(_shmName);
    }
    
    //! \brief Begin the listening in new thread. Non-blocking.
@@ -75,7 +102,7 @@ public:
    }
    
    //! \brief Circular buffer that contains the frames.
-   boost::circular_buffer<MocapFrame>& frames() { return _frames; }
+   boost::circular_buffer<MocapFrame>& frames() { return *_frames; }
    
 private:
    
@@ -83,7 +110,8 @@ private:
    int _sd;
    unsigned char _nnMajor;
    unsigned char _nnMinor;
-   boost::circular_buffer<MocapFrame> _frames;
+   boost::circular_buffer<MocapFrame>* _frames;
+   const char* _shmName;
    
    void _work(int sd)
    {
@@ -97,7 +125,7 @@ private:
          {
             MocapFrame mFrame(_nnMajor,_nnMinor);
             mFrame.unpack(nnp.rawPayloadPtr());
-            _frames.push_back(mFrame);
+            _frames->push_back(mFrame);
          }
       }
    }
