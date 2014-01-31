@@ -52,19 +52,36 @@ public:
       _sd(sd),
       _nnMajor(nnMajor),
       _nnMinor(nnMinor),
-      _frames(bufferSize)
+      _frames(bufferSize),
+      _run(false)
    {
    }
    
    ~FrameListener()
    {
+      if( running() )
+         stop();
+      // I think this may be blocking unless the thread is stopped.
       delete _thread;
    }
    
    //! \brief Begin the listening in new thread. Non-blocking.
    void start()
    {
+      _run = true;
       _thread = new boost::thread( &FrameListener::_work, this, _sd);
+   }
+   
+   //! \brief Cause the thread to stop. Non-blocking.
+   void stop()
+   {
+      _run = false;
+   }
+   
+   //! \brief Return true iff the listener thread is running. Non-blocking.
+   bool running()
+   {
+      return _run;
    }
    
    //! \brief Wait for the listening thread to stop. Blocking.
@@ -84,11 +101,12 @@ private:
    unsigned char _nnMajor;
    unsigned char _nnMinor;
    boost::circular_buffer<MocapFrame> _frames;
+   bool _run;
    
    void _work(int sd)
    {
       NatNetPacket nnp;
-      while(true)
+      while(_run)
       {
          int dataBytes = read( sd, nnp.rawPtr(), nnp.maxLength() );
          
