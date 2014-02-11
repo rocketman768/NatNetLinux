@@ -38,6 +38,7 @@
 #include <NatNetLinux/FrameListener.h>
 
 #include <boost/program_options.hpp>
+#include <time.h>
 
 void readOpts( uint32_t& localAddress, uint32_t& serverAddress, int argc, char* argv[] )
 {
@@ -105,7 +106,7 @@ int main(int argc, char* argv[])
    // Start up a FrameListener, and get a reference to its output rame buffer.
    FrameListener frameListener(sdData, natNetMajor, natNetMinor);
    frameListener.start();
-   boost::circular_buffer<MocapFrame>& frameBuf = frameListener.frames();
+   boost::circular_buffer< std::pair<MocapFrame, struct timespec> >& frameBuf = frameListener.frames();
    
    // This infinite loop simulates a "worker" thread that reads the frame
    // buffer each time through.
@@ -113,7 +114,7 @@ int main(int argc, char* argv[])
    {
       while( !frameBuf.empty() )
       {
-         MocapFrame frame = frameBuf.front();
+         MocapFrame frame = frameBuf.front().first;
          std::cout << frame << std::endl;
          frameBuf.pop_front();
       }

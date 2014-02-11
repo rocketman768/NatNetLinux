@@ -24,6 +24,8 @@
 #include <NatNetLinux/NatNetSender.h>
 #include <boost/thread.hpp>
 #include <boost/circular_buffer.hpp>
+#include <utility>
+#include <time.h>
 
 /*!
  * \brief Class to listen for MocapFrame data.
@@ -92,7 +94,7 @@ public:
    }
    
    //! \brief Circular buffer that contains the frames.
-   boost::circular_buffer<MocapFrame>& frames() { return _frames; }
+   boost::circular_buffer< std::pair<MocapFrame, struct timespec> >& frames() { return _frames; }
    
 private:
    
@@ -100,22 +102,24 @@ private:
    int _sd;
    unsigned char _nnMajor;
    unsigned char _nnMinor;
-   boost::circular_buffer<MocapFrame> _frames;
+   boost::circular_buffer< std::pair<MocapFrame, struct timespec> > _frames;
    bool _run;
    
    void _work(int sd)
    {
       NatNetPacket nnp;
+      struct timespec ts;
+      
       while(_run)
       {
          int dataBytes = read( sd, nnp.rawPtr(), nnp.maxLength() );
+         clock_gettime( CLOCK_REALTIME, &ts );
          
-         std::cout << "Got " << dataBytes << " B\n";
          if( dataBytes > 0 && nnp.iMessage() == NatNetPacket::NAT_FRAMEOFDATA )
          {
             MocapFrame mFrame(_nnMajor,_nnMinor);
             mFrame.unpack(nnp.rawPayloadPtr());
-            _frames.push_back(mFrame);
+            _frames.push_back(std::make_pair(mFrame,ts));
          }
       }
    }
