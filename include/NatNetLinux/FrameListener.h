@@ -54,6 +54,7 @@ public:
       _sd(sd),
       _nnMajor(nnMajor),
       _nnMinor(nnMinor),
+      _framesMutex(),
       _frames(bufferSize),
       _run(false)
    {
@@ -93,8 +94,38 @@ public:
          _thread->join();
    }
    
-   //! \brief Circular buffer that contains the frames.
-   boost::circular_buffer< std::pair<MocapFrame, struct timespec> >& frames() { return _frames; }
+   // Data access =============================================================
+   
+   /*!
+    * \brief Get the latest frame and remove it from the internal buffer. Thread-safe.
+    * 
+    * \param empty input parameter whose value is set to true if the buffer was
+    *        empty and the returned frame is invalid.
+    * \returns most recent frame if the internal buffer is not empty. Otherwise,
+    *          returns an empty frame.
+    */
+   std::pair<MocapFrame, struct timespec> pop(bool* empty=0)
+   {
+      boost::mutex::scoped_lock(_framesMutex);
+      std::pair<MocapFrame, struct timespec> ret;
+      if( empty )
+         *empty = _frames.empty();
+      if( !_frames.empty() )
+      {
+         ret = _frames.front();
+         _frames.pop_front();
+      }
+      return ret;
+   }
+   
+   //! \brief True iff. there are no frames in the internal buffer. Thread-safe.
+   bool empty() const
+   {
+      boost::mutex::scoped_lock(_framesMutex);
+      return _frames.empty();
+   }
+   
+   //--------------------------------------------------------------------------
    
 private:
    
@@ -102,6 +133,7 @@ private:
    int _sd;
    unsigned char _nnMajor;
    unsigned char _nnMinor;
+   mutable boost::mutex _framesMutex;
    boost::circular_buffer< std::pair<MocapFrame, struct timespec> > _frames;
    bool _run;
    
@@ -119,7 +151,9 @@ private:
          {
             MocapFrame mFrame(_nnMajor,_nnMinor);
             mFrame.unpack(nnp.rawPayloadPtr());
-            _frames.push_back(std::make_pair(mFrame,ts));
+            _framesMutex.lock();
+               _frames.push_back(std::make_pair(mFrame,ts));
+            _framesMutex.unlock();
          }
       }
    }

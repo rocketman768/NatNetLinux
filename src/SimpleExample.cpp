@@ -106,17 +106,19 @@ int main(int argc, char* argv[])
    // Start up a FrameListener, and get a reference to its output rame buffer.
    FrameListener frameListener(sdData, natNetMajor, natNetMinor);
    frameListener.start();
-   boost::circular_buffer< std::pair<MocapFrame, struct timespec> >& frameBuf = frameListener.frames();
    
    // This infinite loop simulates a "worker" thread that reads the frame
    // buffer each time through.
+   bool empty;
    while(true)
    {
-      while( !frameBuf.empty() )
+      while( true )
       {
-         MocapFrame frame = frameBuf.front().first;
+         MocapFrame frame(frameListener.pop(&empty).first);
+         // The listener has no more frames.
+         if( empty )
+            break;
          std::cout << frame << std::endl;
-         frameBuf.pop_front();
       }
       
       // Sleep for a little while to simulate work :)

@@ -838,6 +838,7 @@ private:
 std::ostream& operator<<(std::ostream& s, MocapFrame const& frame)
 {
    size_t i, size;
+   std::ios::fmtflags flags = s.flags();
    
    s
    << "--Frame--" << std::endl
@@ -864,12 +865,15 @@ std::ostream& operator<<(std::ostream& s, MocapFrame const& frame)
    int hour,min,sec,fframe,subframe;
    frame.timecode(hour,min,sec,fframe,subframe);
    
+   s.setf( s.fixed, s.floatfield );
+   s.precision(4);
    s
    << "  Latency: " << frame.latency() << std::endl
    << "  Timecode: " << hour << ":" << min << ":" << sec << ":" << fframe << ":" << subframe << std::endl;
    
    s << "++Frame++" << std::endl;
    
+   s.flags(flags);
    return s;
 }
 
