@@ -691,7 +691,13 @@ public:
    std::vector<Point3f> const& unIdMarkers() const { return _uidMarker; }
    //! \brief All the rigid bodies.
    std::vector<RigidBody> const& rigidBodies() const { return _rBodies; }
-   //! \brief Either latency or timecode for the current frame.
+   /*!
+    * \brief Either latency or timecode for the current frame.
+    * 
+    * Dustin Jakes at NaturalPoint says that this is an internal timecode from
+    * Motive that represents the time at which the entire framegroup has
+    * arrived from all the cameras.
+    */
    float latency() const { return _latency; }
    //! \brief SMTPE timecode and sub-timecode.
    void timecode( uint32_t& timecode, uint32_t& subframe ) const
