@@ -165,6 +165,25 @@ public:
    {
    }
    
+   ~Point3f() {}
+   
+   Point3f( Point3f const& other ) :
+      x(other.x),
+      y(other.y),
+      z(other.z)
+   {
+   }
+   
+   Point3f& operator=( Point3f const& other )
+   {
+      // Self-assignment no problem
+      x = other.x;
+      y = other.y;
+      z = other.z;
+      
+      return *this;
+   }
+   
    float x;
    float y;
    float z;
@@ -205,6 +224,8 @@ public:
    {
       renormalize();
    }
+   
+   ~Quaternion4f(){}
    
    //! \brief Copy constructor
    Quaternion4f( Quaternion4f const& other ) :
@@ -317,7 +338,14 @@ class RigidBody
 public:
    
    //! \brief Default constructor
-   RigidBody()
+   RigidBody() :
+      _id(-1),
+      _loc(),
+      _ori(),
+      _markers(),
+      _mId(),
+      _mSize(),
+      _mErr()
    {
    }
    
@@ -336,7 +364,7 @@ public:
    ~RigidBody(){}
    
    //! \brief Assignment operator
-   RigidBody const& operator=( RigidBody const& other )
+   RigidBody& operator=( RigidBody const& other )
    {
       _id = other._id;
       _loc = other._loc;
@@ -460,11 +488,20 @@ public:
    {
    }
    
+   ~MarkerSet(){}
+   
    //! \brief Copy constructor
    MarkerSet( MarkerSet const& other ) :
       _name(other._name),
       _markers(other._markers)
    {
+   }
+   
+   //! \brief Assignment operator
+   MarkerSet& operator=( MarkerSet const& other )
+   {
+      _name = other._name;
+      _markers = other._markers;
    }
    
    //! \brief The name of the set
@@ -538,6 +575,14 @@ public:
    {
    }
    
+   Skeleton( Skeleton const& other ) :
+      _id(other._id),
+      _rBodies(other._rBodies)
+   {
+   }
+   
+   ~Skeleton(){}
+   
    //! \brief ID of this skeleton.
    int id() const { return _id; }
    //! \brief Vector of rigid bodies in this skeleton.
@@ -580,11 +625,30 @@ class LabeledMarker
 {
 public:
    
+   //! \brief Default constructor.
    LabeledMarker() :
       _id(0),
       _p(),
       _size(0.f)
    {
+   }
+   
+   ~LabeledMarker(){}
+   
+   //! \brief Copy constructor.
+   LabeledMarker( LabeledMarker const& other ) :
+      _id(other._id),
+      _p(other._p),
+      _size(other._size)
+   {
+   }
+   
+   //! \brief Assignment operator.
+   LabeledMarker& operator=( LabeledMarker const& other )
+   {
+      _id = other._id;
+      _p = other._p;
+      _size = other._size;
    }
    
    //! \brief ID of this marker.
@@ -664,7 +728,8 @@ public:
       
    }
    
-   MocapFrame const& operator=( MocapFrame const& other )
+   //! \brief Assignment operator
+   MocapFrame& operator=( MocapFrame const& other )
    {
       _nnMajor = other._nnMajor;
       _nnMinor = other._nnMinor;
