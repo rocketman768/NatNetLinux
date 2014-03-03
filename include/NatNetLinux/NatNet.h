@@ -683,7 +683,12 @@ public:
       return *this;
    }
    
-   //! \brief Frame number. Not always consecutive, but strictly increasing in time.
+   /*!
+    * \brief Frame number.
+    * 
+    * Dustin Jakes at NaturalPoint says this is undefined in live capture mode,
+    * and is the actual frame number in playback mode.
+    */
    int frameNum() const { return _frameNum; }
    //! \brief All the sets of markers except unidentified ones.
    std::vector<MarkerSet> const& markerSets() const { return _markerSet; }
