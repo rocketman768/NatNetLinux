@@ -57,8 +57,8 @@ public:
       // like 256 kB.
       const int rcvBufSize = 0x100000;
       int sd;
-      int tmp;
-      socklen_t len;
+      int tmp=0;
+      socklen_t len=0;
       struct sockaddr_in sockAddr;
       
       sd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -809,8 +809,6 @@ public:
       // Get "end of data" tag
       int eod = 0;
       memcpy(&eod,data,4); data += 4;
-      
-      printf("Data read: %ld B\n", (data-dataBeg));
       
       return data;
    }
