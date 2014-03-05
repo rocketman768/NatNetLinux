@@ -30,12 +30,9 @@
 /*!
  * \brief Class to listen for MocapFrame data.
  * 
- * This class uses a circular buffer to store the frame data. There is no need
- * for synchronization across threads to this buffer as long as the frames
- * are copied or used quickly enough so that this class does not wrap back
- * around and overwrite them. Otherwise, you may consider adding a mutex and
- * lock for accessing the buffer.
- * 
+ * This class listens for MocapFrame data on a given socket.
+ * It uses a circular buffer to store the frame data, and provides a
+ * thread-safe interface to query for the most recent frames.
  */
 class FrameListener
 {
@@ -100,11 +97,13 @@ public:
     * \brief Get the latest frame and remove it from the internal buffer. Thread-safe.
     * 
     * \param empty
-    *    input parameter whose value is set to true if the buffer was
-    *    empty and the returned frame is invalid.
+    *    input parameter. If nont null, its value is set to true if the buffer
+    *    was empty and the returned frame is invalid.
     * \returns
-    *    most recent frame if the internal buffer is not empty. Otherwise,
-    *    returns an empty frame.
+    *    most recent frame/timestamp pair if the internal buffer is not empty.
+    *    Otherwise, returns an invalid frame. The timestamp is the result of
+    *    \c clock_gettime( \c CLOCK_REALTIME, ...) when the data is read
+    *    from the UDP interface.
     */
    std::pair<MocapFrame, struct timespec> pop(bool* empty=0)
    {
