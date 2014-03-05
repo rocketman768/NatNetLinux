@@ -99,14 +99,16 @@ public:
    /*!
     * \brief Get the latest frame and remove it from the internal buffer. Thread-safe.
     * 
-    * \param empty input parameter whose value is set to true if the buffer was
-    *        empty and the returned frame is invalid.
-    * \returns most recent frame if the internal buffer is not empty. Otherwise,
-    *          returns an empty frame.
+    * \param empty
+    *    input parameter whose value is set to true if the buffer was
+    *    empty and the returned frame is invalid.
+    * \returns
+    *    most recent frame if the internal buffer is not empty. Otherwise,
+    *    returns an empty frame.
     */
    std::pair<MocapFrame, struct timespec> pop(bool* empty=0)
    {
-      boost::mutex::scoped_lock(_framesMutex);
+      boost::lock_guard<boost::mutex> lock(_framesMutex);
       std::pair<MocapFrame, struct timespec> ret;
       if( empty )
          *empty = _frames.empty();
@@ -116,13 +118,6 @@ public:
          _frames.pop_back();
       }
       return ret;
-   }
-   
-   //! \brief True iff. there are no frames in the internal buffer. Thread-safe.
-   bool empty() const
-   {
-      boost::mutex::scoped_lock(_framesMutex);
-      return _frames.empty();
    }
    
    //--------------------------------------------------------------------------

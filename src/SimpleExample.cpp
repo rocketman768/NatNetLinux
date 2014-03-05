@@ -110,6 +110,7 @@ int main(int argc, char* argv[])
    // This infinite loop simulates a "worker" thread that reads the frame
    // buffer each time through.
    bool empty;
+   MocapFrame frame;
    while(true)
    {
       while( true )
@@ -122,7 +123,7 @@ int main(int argc, char* argv[])
       }
       
       // Sleep for a little while to simulate work :)
-      usleep(100);
+      usleep(1000);
    }
    
    // Wait for listener threads to finish. Probably never. Just CTRL-C.
