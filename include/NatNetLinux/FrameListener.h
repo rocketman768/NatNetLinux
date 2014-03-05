@@ -112,8 +112,8 @@ public:
          *empty = _frames.empty();
       if( !_frames.empty() )
       {
-         ret = _frames.front();
-         _frames.pop_front();
+         ret = _frames.back();
+         _frames.pop_back();
       }
       return ret;
    }

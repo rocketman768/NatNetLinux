@@ -502,6 +502,7 @@ public:
    {
       _name = other._name;
       _markers = other._markers;
+      return *this;
    }
    
    //! \brief The name of the set
@@ -517,12 +518,12 @@ public:
     */
    char const* unpack(char const* data)
    {
-      char n[256];
+      char n[256]; n[255] = '\0';
       int numMarkers;
       int i;
       float x,y,z;
       
-      strncpy(n,data,sizeof(n));
+      strncpy(n,data,sizeof(n)-1);
       _name = n;
       data += strlen(n)+1;
       
@@ -649,6 +650,7 @@ public:
       _id = other._id;
       _p = other._p;
       _size = other._size;
+      return *this;
    }
    
    //! \brief ID of this marker.
@@ -807,7 +809,7 @@ public:
       int numUidMarkers;
       float x,y,z;
       
-      char const* const dataBeg = data;
+      //char const* const dataBeg = data;
       
       // NOTE: need to worry about network order here?
       

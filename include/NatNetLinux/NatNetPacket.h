@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <string.h>
 
 /*!
  * \brief Class to encapsulate NatNet packets.
@@ -35,9 +36,34 @@ public:
    {
    }
    
+   //! \brief Copy constructor.
+   NatNetPacket( NatNetPacket const& other ) :
+      _data(new char[other._dataLen]), _dataLen(other._dataLen)
+   {
+      memcpy( _data, other._data, other._dataLen );
+   }
+   
    ~NatNetPacket()
    {
       delete[] _data;
+   }
+   
+   //! \brief Assignment operator. Does deep copy.
+   NatNetPacket& operator=( NatNetPacket const& other )
+   {
+      // Careful with self-assignment
+      if( _dataLen < other._dataLen )
+      {
+         delete[] _data;
+         _dataLen = other._dataLen;
+         _data = new char[_dataLen];
+         // Can do memcpy, because we know the other isn't us.
+         memcpy( _data, other._data, _dataLen );
+      }
+      else
+         memmove( _data, other._data, _dataLen );
+      
+      return *this;
    }
    
    //! \brief Construct a "ping" packet.

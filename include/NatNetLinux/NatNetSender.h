@@ -11,6 +11,7 @@ class NatNetSender
 {
 #define MAX_NAMELENGTH 256
 public:
+   //! \brief Default constructor
    NatNetSender()
    {
       memset(_name, 0, MAX_NAMELENGTH);
@@ -18,7 +19,24 @@ public:
       memset(_natNetVersion, 0, 4);
    }
    
+   //! \brief Copy constructor
+   NatNetSender( NatNetSender const& other )
+   {
+      memcpy( _name, other._name, MAX_NAMELENGTH );
+      memcpy( _version, other._version, 4 );
+      memcpy( _natNetVersion, other._natNetVersion, 4 );
+   }
+   
    ~NatNetSender(){}
+   
+   //! \brief Assignment operator
+   NatNetSender& operator=( NatNetSender const& other )
+   {
+      memmove( _name, other._name, MAX_NAMELENGTH );
+      memmove( _version, other._version, 4 );
+      memmove( _natNetVersion, other._natNetVersion, 4 );
+      return *this;
+   }
    
    //! \brief Name of sending application.
    std::string name() const
