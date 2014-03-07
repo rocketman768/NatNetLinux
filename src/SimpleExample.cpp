@@ -88,6 +88,86 @@ void readOpts( int argc, char* argv[] )
    Globals::serverAddress = inet_addr( vm["server-addr"].as<std::string>().c_str() );
 }
 
+// This thread loop just prints frames as they arrive.
+void printFrames(FrameListener& frameListener)
+{
+   bool empty;
+   MocapFrame frame;
+   Globals::run = true;
+   while(Globals::run)
+   {
+      while( true )
+      {
+         // Try to get a new frame from the listener.
+         MocapFrame frame(frameListener.pop(&empty).first);
+         // Quit if the listener has no more frames.
+         if( empty )
+            break;
+         std::cout << frame << std::endl;
+      }
+      
+      // Sleep for a little while to simulate work :)
+      usleep(1000);
+   }
+}
+
+// This thread loop collects inter-frame arrival statistics and prints a
+// histogram at the end. You can plot the data by copying it to a file
+// (say time.txt), and running gnuplot with the command:
+//     gnuplot> plot 'time.txt' using 1:2 title 'Time Stats' with bars
+void timeStats(FrameListener& frameListener, const float diffMin_ms = 0.5, const float diffMax_ms = 7.0, const int bins = 100)
+{
+   size_t hist[bins];
+   float diff_ms;
+   int bin;
+   struct timespec current;
+   struct timespec prev;
+   struct timespec tmp;
+   
+   std::cout << std::endl << "Collecting inter-frame arrival statistics...press ctrl-c to finish." << std::endl;
+   
+   memset(hist, 0x00, sizeof(hist));
+   bool empty;
+   Globals::run = true;
+   while(Globals::run)
+   {
+      while( true )
+      {
+         // Try to get a new frame from the listener.
+         prev = current;
+         tmp = frameListener.pop(&empty).second;
+         // Quit if the listener has no more frames.
+         if( empty )
+            break;
+         
+         current = tmp;
+         
+         diff_ms =
+            std::abs(
+               (static_cast<float>(current.tv_sec)-static_cast<float>(prev.tv_sec))*1000.f
+                + (static_cast<float>(current.tv_nsec)-static_cast<float>(prev.tv_nsec))/1000000.f
+            );
+         
+         bin = (diff_ms-diffMin_ms)/(diffMax_ms-diffMin_ms) * (bins+1);
+         if( bin < 0 )
+            bin = 0;
+         else if( bin >= bins )
+            bin = bins-1;
+         
+         hist[bin] += 1;
+      }
+      
+      // Sleep for a little while to simulate work :)
+      usleep(1000);
+   }
+   
+   // Print the stats
+   std::cout << std::endl << std::endl;
+   std::cout << "# Time diff (ms), Count" << std::endl;
+   for( bin = 0; bin < bins; ++bin )
+      std::cout << diffMin_ms+(diffMax_ms-diffMin_ms)*(0.5f+bin)/bins << ", " << hist[bin] << std::endl;
+}
+
 int main(int argc, char* argv[])
 {
    // Version number of the NatNet protocol, as reported by the server.
@@ -127,25 +207,9 @@ int main(int argc, char* argv[])
    frameListener.start();
    
    // This infinite loop simulates a "worker" thread that reads the frame
-   // buffer each time through.
-   bool empty;
-   MocapFrame frame;
-   Globals::run = true;
-   while(Globals::run)
-   {
-      while( true )
-      {
-         // Try to get a new frame from the listener.
-         MocapFrame frame(frameListener.pop(&empty).first);
-         // Quit if the listener has no more frames.
-         if( empty )
-            break;
-         std::cout << frame << std::endl;
-      }
-      
-      // Sleep for a little while to simulate work :)
-      usleep(1000);
-   }
+   // buffer each time through, and exits when ctrl-c is pressed.
+   printFrames(frameListener);
+   //timeStats(frameListener);
    
    // Wait for threads to finish.
    frameListener.stop();
