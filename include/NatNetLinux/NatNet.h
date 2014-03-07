@@ -40,6 +40,33 @@ class NatNet
 {
 public:
    
+   //! \brief Default NatNet command port
+   static const uint16_t commandPort=1510;
+   //! \brief Default NatNet data port
+   static const uint16_t dataPort=1511;
+   
+   /*!
+    * \brief Create a socket IPv4 address structure.
+    * 
+    * \param inAddr
+    *    IPv4 address that the returned structure describes
+    * \param port
+    *    port that the returned structure describes
+    * \returns
+    *    an IPv4 socket address structure that describes a given address and
+    *    port
+    */
+   static struct sockaddr_in createAddress( uint32_t inAddr, uint16_t port=commandPort )
+   {
+      struct sockaddr_in ret;
+      memset(&ret, 0, sizeof(ret));
+      ret.sin_family = AF_INET;
+      ret.sin_port = htons(port);
+      ret.sin_addr.s_addr = inAddr;
+      
+      return ret;
+   }
+   
    /*!
     * \brief Creates a socket for receiving commands.
     * 
@@ -50,7 +77,7 @@ public:
     * \param port command port, defaults to 1510
     * \returns socket descriptor bound to \c port and \c inAddr
     */
-   static int createCommandSocket( uint32_t inAddr, uint16_t port=1510 )
+   static int createCommandSocket( uint32_t inAddr, uint16_t port=commandPort )
    {
       // Asking for a buffer of 1MB = 2^20 bytes. This is what NP does, but this
       // seems far too large on Linux systems where the max is usually something
@@ -59,7 +86,7 @@ public:
       int sd;
       int tmp=0;
       socklen_t len=0;
-      struct sockaddr_in sockAddr;
+      struct sockaddr_in sockAddr = createAddress(inAddr, port);
       
       sd = socket(AF_INET, SOCK_DGRAM, 0);
       if( sd < 0 )
@@ -68,12 +95,7 @@ public:
          exit(1);
       }
       
-      // Bind socket
-      memset(&sockAddr, 0, sizeof(sockAddr));
-      sockAddr.sin_family = AF_INET;
-      sockAddr.sin_port = htons(port);
-      //sockAddr.sin_port = htons(0);
-      sockAddr.sin_addr.s_addr = inAddr;
+      // Bind socket to the address.
       tmp = bind( sd, (struct sockaddr*)&sockAddr, sizeof(sockAddr) );
       if( tmp < 0 )
       {
@@ -95,10 +117,8 @@ public:
       getsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char*)&tmp, &len);
       if( tmp != rcvBufSize )
       {
-         std::cerr << "Could not set receive buffer size. Asked for "
+         std::cerr << "WARNING: Could not set receive buffer size. Asked for "
             << rcvBufSize << "B got " << tmp << "B" << std::endl;
-         //close(sd);
-         //exit(1);
       }
       
       return sd;
@@ -116,13 +136,13 @@ public:
     * \param multicastAddr multicast address to subscribe to. Defaults to 239.255.42.99.
     * \returns socket bound as described above
     */
-   static int createDataSocket( uint32_t inAddr, uint16_t port=1511, uint32_t multicastAddr=inet_addr("239.255.42.99") )
+   static int createDataSocket( uint32_t inAddr, uint16_t port=dataPort, uint32_t multicastAddr=inet_addr("239.255.42.99") )
    {
       int sd;
       int value;
       int tmp;
-      struct sockaddr_in localSock;
       struct ip_mreq group;
+      struct sockaddr_in localSock = createAddress(INADDR_ANY, port);
       
       sd = socket(AF_INET, SOCK_DGRAM, 0);
       value = 1;
@@ -135,10 +155,6 @@ public:
       }
       
       // Bind the socket to a port.
-      memset((char*)&localSock, 0, sizeof(localSock));
-      localSock.sin_family = AF_INET;
-      localSock.sin_port = htons(port);
-      localSock.sin_addr.s_addr = INADDR_ANY;
       bind(sd, (struct sockaddr*)&localSock, sizeof(localSock));
       
       // Connect a local interface address to the multicast interface address.

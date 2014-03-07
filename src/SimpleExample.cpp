@@ -15,10 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with NatNetLinux.  If not, see <http://www.gnu.org/licenses/>.
  */
-    
-#define MULTICAST_ADDRESS "239.255.42.99"
-#define PORT_COMMAND      1510
-#define PORT_DATA         1511
 
 #include <iostream>
 #include <stdio.h>
@@ -70,27 +66,28 @@ void readOpts( uint32_t& localAddress, uint32_t& serverAddress, int argc, char* 
 
 int main(int argc, char* argv[])
 {
+   // Version number of the NatNet protocol, as reported by the server.
    unsigned char natNetMajor;
    unsigned char natNetMinor;
    
+   // Sockets
    int sdCommand;
    int sdData;
    
+   // Addresses
    uint32_t localAddress;
    uint32_t serverAddress;
    
+   // Set addresses
    readOpts( localAddress, serverAddress, argc, argv );
-   
    // Use this socket address to send commands to the server.
-   struct sockaddr_in serverCommands;
-   memset(&serverCommands, 0, sizeof(serverCommands));
-   serverCommands.sin_family = AF_INET;
-   serverCommands.sin_port = htons(PORT_COMMAND);
-   serverCommands.sin_addr.s_addr = serverAddress;
+   struct sockaddr_in serverCommands = NatNet::createAddress(serverAddress, NatNet::commandPort);
    
+   // Create sockets
    sdCommand = NatNet::createCommandSocket( localAddress );
    sdData = NatNet::createDataSocket( localAddress );
    
+   // Start the CommandListener in a new thread.
    CommandListener commandListener(sdCommand);
    commandListener.start();
 
@@ -103,7 +100,7 @@ int main(int argc, char* argv[])
    commandListener.getNatNetVersion(natNetMajor, natNetMinor);
    std::cout << "Main thread got version " << static_cast<int>(natNetMajor) << "." << static_cast<int>(natNetMinor) << std::endl;
    
-   // Start up a FrameListener, and get a reference to its output rame buffer.
+   // Start up a FrameListener in a new thread.
    FrameListener frameListener(sdData, natNetMajor, natNetMinor);
    frameListener.start();
    
@@ -115,8 +112,9 @@ int main(int argc, char* argv[])
    {
       while( true )
       {
+         // Try to get a new frame from the listener.
          MocapFrame frame(frameListener.pop(&empty).first);
-         // The listener has no more frames.
+         // Quit if the listener has no more frames.
          if( empty )
             break;
          std::cout << frame << std::endl;
