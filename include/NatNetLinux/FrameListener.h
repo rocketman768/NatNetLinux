@@ -135,11 +135,23 @@ private:
    {
       NatNetPacket nnp;
       struct timespec ts;
+      size_t dataBytes;
+      
+      fd_set rfds;
+      struct timeval timeout;
       
       while(_run)
       {
-         int dataBytes = read( sd, nnp.rawPtr(), nnp.maxLength() );
+         // Wait for at most 1 second until the socket has data (read()
+         // will not block). Otherwise, continue. This gives outside threads
+         // a chance to kill this thread every second.
+         timeout.tv_sec = 1; timeout.tv_usec = 0;
+         FD_ZERO(&rfds); FD_SET(sd, &rfds);
+         if( !select(sd+1, &rfds, 0, 0, &timeout) )
+            continue;
+         
          clock_gettime( CLOCK_REALTIME, &ts );
+         dataBytes = read( sd, nnp.rawPtr(), nnp.maxLength() );
          
          if( dataBytes > 0 && nnp.iMessage() == NatNetPacket::NAT_FRAMEOFDATA )
          {

@@ -40,6 +40,7 @@ public:
     * \param sd The socket on which to listen.
     */
    CommandListener(int sd = -1) :
+      _run(false),
       _thread(0),
       _sd(sd),
       _nnMajor(0),
@@ -50,13 +51,28 @@ public:
    
    ~CommandListener()
    {
+      if( running() )
+         stop();
       delete _thread;
    }
    
    //! \brief Begin the listening in new thread. Non-blocking.
    void start()
    {
+      _run = true;
       _thread = new boost::thread( &CommandListener::_work, this, _sd);
+   }
+   
+    //! \brief Cause the thread to stop. Non-blocking.
+   void stop()
+   {
+      _run = false;
+   }
+   
+   //! \brief Return true iff the listener thread is running. Non-blocking.
+   bool running()
+   {
+      return _run;
    }
    
    //! \brief Wait for the listening thread to stop. Blocking.
@@ -87,6 +103,7 @@ public:
    
 private:
    
+   bool _run;
    boost::thread* _thread;
    int _sd;
    unsigned char _nnMajor;
@@ -102,11 +119,22 @@ private:
       socklen_t senderAddressLength = sizeof(senderAddress);
       NatNetSender sender;
       
-      while(true)
+      fd_set rfds;
+      struct timeval timeout;
+      
+      while(_run)
       {
          // Give other threads an opportunity to interrupt this thread.
          //boost::this_thread::interruption_point();
        
+         // Wait for at most 1 second until the socket has data (recvfrom()
+         // will not block). Otherwise, continue. This gives outside threads
+         // a chance to kill this thread every second.
+         timeout.tv_sec = 1; timeout.tv_usec = 0;
+         FD_ZERO(&rfds); FD_SET(sd, &rfds);
+         if( !select(sd+1, &rfds, 0, 0, &timeout) )
+            continue;
+         
          // blocking
          len = recvfrom(
             sd,
