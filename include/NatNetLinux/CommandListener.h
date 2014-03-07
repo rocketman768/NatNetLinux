@@ -1,5 +1,5 @@
 /*
- * CommandListener.h is part of NatNetLinux, and is Copyright 2013,
+ * CommandListener.h is part of NatNetLinux, and is Copyright 2013-2014,
  * Philip G. Lee <rocketman768@gmail.com>
  *
  * NatNetLinux is free software: you can redistribute it and/or modify
