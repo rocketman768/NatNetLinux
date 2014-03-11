@@ -16,11 +16,16 @@ OPTION( BUILD_EXAMPLES "If on, build executable examples." ON )
 # Put executables in bin/
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
 
+# Include our own directories.
 INCLUDE_DIRECTORIES( "${CMAKE_CURRENT_SOURCE_DIR}/include" )
 
-FIND_PACKAGE( Boost COMPONENTS program_options system thread REQUIRED)
-INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIRS} )
+# Need to find boost at build time only if we are actually compiling examples.
+IF( ${BUILD_EXAMPLES} )
+   FIND_PACKAGE( Boost COMPONENTS program_options system thread REQUIRED)
+   INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIRS} )
+ENDIF()
 
+# Try to find Doxygen
 FIND_PROGRAM( DOXYGEN_CMD doxygen )
 
 # Descend into subdirectories
@@ -31,3 +36,4 @@ ENDIF()
 IF( ${BUILD_EXAMPLES} )
    ADD_SUBDIRECTORY( src )
 ENDIF()
+
