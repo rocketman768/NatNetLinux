@@ -25,7 +25,8 @@
 #include <string.h>
 
 /*!
- * \brief Class to encapsulate NatNet packets.
+ * \brief Encapsulates NatNet packets.
+ * \author Philip G. Lee
  */
 class NatNetPacket
 {

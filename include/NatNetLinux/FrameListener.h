@@ -28,7 +28,8 @@
 #include <time.h>
 
 /*!
- * \brief Class to listen for MocapFrame data.
+ * \brief Thread to listen for MocapFrame data.
+ * \author Philip G. Lee
  * 
  * This class listens for MocapFrame data on a given socket.
  * It uses a circular buffer to store the frame data, and provides a
@@ -97,7 +98,7 @@ public:
     * \brief Get the latest frame and remove it from the internal buffer. Thread-safe.
     * 
     * \param empty
-    *    input parameter. If nont null, its value is set to true if the buffer
+    *    input parameter. If not null, its value is set to true if the buffer
     *    was empty and the returned frame is invalid.
     * \returns
     *    most recent frame/timestamp pair if the internal buffer is not empty.

@@ -23,7 +23,11 @@
 #include <string>
 
 /*!
- * \brief Class to encapsulate NatNet Sender packet data.
+ * \brief Encapsulates NatNet Sender packet data.
+ * \author Philip G. Lee
+ * 
+ * NatNet requires that servers respond with some basic information about
+ * themselves. This class encapsulates that information.
  */
 class NatNetSender
 {

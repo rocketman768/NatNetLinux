@@ -36,6 +36,10 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+/*!
+ * \brief Encapsulates basic NatNet communication functionality
+ * \author Philip G. Lee
+ */
 class NatNet
 {
 public:
@@ -172,7 +176,10 @@ public:
    }
 };
 
-//! \brief Simple 3D point
+/*!
+ * \brief Simple 3D point
+ * \author Philip G. Lee
+ */
 class Point3f
 {
 public:
@@ -222,7 +229,17 @@ std::ostream& operator<<( std::ostream& s, Point3f const& point )
    return s;
 }
 
-//! \brief Quaternion for 3D rotations
+/*!
+ * \brief Quaternion for 3D rotations and orientation
+ * \author Philip G. Lee
+ * 
+ * For more information, please see [Quaternions on Wikipedia](http://en.wikipedia.org/wiki/Quaternion).
+ * A quaternion is a non-commutative group which describes 3D rotations, and whose group
+ * operation (multiplication) represents rotation composition (A*B means rotate
+ * by B, then by A). Since it is a proper group, there are no uninvertible
+ * rotations (like with Euler angles). It is also parameterized by the smallest
+ * number of parameters (4), unlike a 3x3 matrix (9).
+ */
 class Quaternion4f
 {
 public:
@@ -231,7 +248,7 @@ public:
    float qz;
    float qw;
    
-   //! \brief Default constructor
+   //! \brief Default constructor. Without parameters, returns the identity (no rotation).
    Quaternion4f( float qx=0.f, float qy=0.f, float qz=0.f, float qw=1.f ) :
       qx(qx),
       qy(qy),
@@ -283,13 +300,30 @@ public:
       return *this;
    }
    
-   //! \brief Quaternion multiplication
+   //! \brief Quaternion multiplication (rotation composition)
    Quaternion4f operator*(Quaternion4f const& rhs) const
    {
       Quaternion4f ret(*this);
       
       ret *= rhs;
       
+      return ret;
+   }
+   
+   //! \brief Quaternion division/assignment
+   Quaternion4f& operator/=(Quaternion4f const& rhs)
+   {
+      // Create the conjugate and multiply.
+      Quaternion4f rhsConj(-rhs.qx, -rhs.qy, -rhs.qy, rhs.qw);
+      *this *= rhsConj;
+      return *this;
+   }
+   
+   //! \brief Quaternion division
+   Quaternion4f operator/(Quaternion4f const& rhs) const
+   {
+      Quaternion4f ret(*this);
+      ret /= rhs;
       return ret;
    }
    
@@ -348,6 +382,10 @@ std::ostream& operator<<( std::ostream& s, Quaternion4f const& q )
 /*!
  * \brief Rigid body
  * \author Philip G. Lee
+ * 
+ * This class is a composition of markers that describe a rigid body. The basic
+ * traits of the rigid body are its 3D location() and orientation(). Rigid
+ * bodies can be created in Optitrack's Motive:Tracker software.
  */
 class RigidBody
 {
@@ -403,7 +441,7 @@ public:
    std::vector<Point3f> const& markers() const { return _markers; }
    
    /*!
-    * \brief Unpack skeleton data from raw packed data.
+    * \brief Unpack rigid body data from raw packed data.
     * 
     * \param data pointer to packed data representing a RigidBody
     * \param nnMajor major version of NatNet used to construct the packed data
@@ -579,8 +617,10 @@ std::ostream& operator<<( std::ostream& s, MarkerSet const& set )
 }
 
 /*!
- * \brief Skeleton
+ * \brief A composition of rigid bodies
  * \author Philip G. Lee
+ * 
+ * A skeleton is simply a collection of RigidBody elements.
  */
 class Skeleton
 {
@@ -787,13 +827,26 @@ public:
     * arrived from all the cameras.
     */
    float latency() const { return _latency; }
-   //! \brief SMTPE timecode and sub-timecode.
+   /*!
+    * \brief SMTPE timecode and sub-timecode.
+    * 
+    * \param timecode output timecode
+    * \param subframe output subframe
+    */
    void timecode( uint32_t& timecode, uint32_t& subframe ) const
    {
       timecode = _timecode;
       subframe = _subTimecode;
    }
-   //! \brief Timecode decoded.
+   /*!
+    * \brief Timecode decoded.
+    * 
+    * \param hour output timecode hour
+    * \param minute output timecode minute
+    * \param second output timecode second
+    * \param frame output timecode frame
+    * \param subFrame output timecode subframe
+    */
    void timecode(
       int& hour,
       int& minute,

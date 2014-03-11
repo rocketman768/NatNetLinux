@@ -1,4 +1,3 @@
-FIND_PROGRAM( DOXYGEN_CMD doxygen )
 FIND_PROGRAM( DOT_CMD dot )
 
 # Set some variables to configure Doxyfile.in==================================

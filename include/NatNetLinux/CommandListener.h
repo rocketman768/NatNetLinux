@@ -26,9 +26,11 @@
 #include <boost/circular_buffer.hpp>
 
 /*!
- * \brief Class to listen for command responses.
+ * \brief Thread to listen for command responses.
+ * \author Philip G. Lee
  * 
- * This class spawns a new thread to listen for command responses.
+ * This class spawns a new thread to listen for command responses. This class
+ * is needed to retrieve the NatNet protocol version in use by the server.
  */
 class CommandListener
 {
@@ -85,10 +87,12 @@ public:
    /*!
     * \brief Get NatNet major and minor version numbers. Blocking.
     * 
-    * WARNING: this call blocks until a ping response packet is heard.
-    * The reason is that the ping response packet is the only one that
-    * contains the NatNet version string. So, you \b MUST send a ping to
-    * the server before calling this to avoid deadlock.
+    * \warning
+    *  this call blocks until the first ping response packet is heard,
+    *  and afterwards does not block.
+    *  The reason is that the ping response packet is the only one that
+    *  contains the NatNet version string. So, you \b MUST send a ping to
+    *  the server before calling this to avoid deadlock.
     * 
     * \param major output NatNet major version
     * \param minor output NatNet minor version
