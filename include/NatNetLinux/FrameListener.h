@@ -97,26 +97,78 @@ public:
    /*!
     * \brief Get the latest frame and remove it from the internal buffer. Thread-safe.
     * 
-    * \param empty
-    *    input parameter. If not null, its value is set to true if the buffer
-    *    was empty and the returned frame is invalid.
+    * This function may block while reading the buffer. \c success will be false only if there
+    * is no more data in the internal buffer.
+    * 
+    * \param success
+    *    input parameter. If not null, its value is set to true if the return
+    *    value is valid, and false otherwise.
     * \returns
-    *    most recent frame/timestamp pair if the internal buffer is not empty.
+    *    most recent frame/timestamp pair if the internal buffer has data.
     *    Otherwise, returns an invalid frame. The timestamp is the result of
     *    \c clock_gettime( \c CLOCK_REALTIME, ...) when the data is read
     *    from the UDP interface.
+    * 
+    * \sa tryPop()
     */
-   std::pair<MocapFrame, struct timespec> pop(bool* empty=0)
+   std::pair<MocapFrame, struct timespec> pop(bool* success=0)
    {
-      boost::lock_guard<boost::mutex> lock(_framesMutex);
       std::pair<MocapFrame, struct timespec> ret;
-      if( empty )
-         *empty = _frames.empty();
+      bool retSuccess = false;
+      
+      _framesMutex.lock();
       if( !_frames.empty() )
       {
+         retSuccess = true;
          ret = _frames.back();
          _frames.pop_back();
       }
+      _framesMutex.unlock();
+      
+      if( success )
+         *success = retSuccess;
+      return ret;
+   }
+   
+   /*!
+    * \brief Get the latest frame and remove it from the internal buffer. Thread-safe *non-blocking*.
+    * 
+    * This function is just like \c pop(), but never blocks. If you are willing
+    * to wait to acquire the lock to read the internal data buffer, then use
+    * the blocking version \c pop(). If you use \c tryPop(),
+    * it will not block, but \c success will be false if either the
+    * buffer is currently being written, *or* if there is no more data.
+    * 
+    * \param success
+    *    input parameter. If not null, its value is set to true if the return
+    *    value is valid, and false otherwise.
+    * \returns
+    *    most recent frame/timestamp pair if the internal buffer has data
+    *    *and* is available for reading immediately.
+    *    Otherwise, returns an invalid frame. The timestamp is the result of
+    *    \c clock_gettime( \c CLOCK_REALTIME, ...) when the data is read
+    *    from the UDP interface.
+    * 
+    * \sa pop()
+    */
+   std::pair<MocapFrame, struct timespec> tryPop(bool* success=0)
+   {
+      std::pair<MocapFrame, struct timespec> ret;
+      bool retSuccess = false;
+      
+      if( _framesMutex.try_lock() )
+      {
+         if( !_frames.empty() )
+         {
+            retSuccess = true;
+            ret = _frames.back();
+            _frames.pop_back();
+         }
+         _framesMutex.unlock();
+      }
+      
+      if( success )
+         *success = retSuccess;
       return ret;
    }
    

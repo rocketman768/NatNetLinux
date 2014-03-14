@@ -91,7 +91,7 @@ void readOpts( int argc, char* argv[] )
 // This thread loop just prints frames as they arrive.
 void printFrames(FrameListener& frameListener)
 {
-   bool empty;
+   bool valid;
    MocapFrame frame;
    Globals::run = true;
    while(Globals::run)
@@ -99,9 +99,9 @@ void printFrames(FrameListener& frameListener)
       while( true )
       {
          // Try to get a new frame from the listener.
-         MocapFrame frame(frameListener.pop(&empty).first);
+         MocapFrame frame(frameListener.pop(&valid).first);
          // Quit if the listener has no more frames.
-         if( empty )
+         if( !valid )
             break;
          std::cout << frame << std::endl;
       }
@@ -127,7 +127,7 @@ void timeStats(FrameListener& frameListener, const float diffMin_ms = 0.5, const
    std::cout << std::endl << "Collecting inter-frame arrival statistics...press ctrl-c to finish." << std::endl;
    
    memset(hist, 0x00, sizeof(hist));
-   bool empty;
+   bool valid;
    Globals::run = true;
    while(Globals::run)
    {
@@ -135,9 +135,9 @@ void timeStats(FrameListener& frameListener, const float diffMin_ms = 0.5, const
       {
          // Try to get a new frame from the listener.
          prev = current;
-         tmp = frameListener.pop(&empty).second;
+         tmp = frameListener.pop(&valid).second;
          // Quit if the listener has no more frames.
-         if( empty )
+         if( !valid )
             break;
          
          current = tmp;
