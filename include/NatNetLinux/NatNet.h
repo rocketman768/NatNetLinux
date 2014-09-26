@@ -399,7 +399,8 @@ public:
       _markers(),
       _mId(),
       _mSize(),
-      _mErr()
+      _mErr(),
+      _trackingValid(true)
    {
    }
    
@@ -411,7 +412,8 @@ public:
       _markers(other._markers),
       _mId(other._mId),
       _mSize(other._mSize),
-      _mErr(other._mErr)
+      _mErr(other._mErr),
+      _trackingValid(other._trackingValid)
    {
    }
    
@@ -427,6 +429,7 @@ public:
       _mId = other._mId;
       _mSize = other._mSize;
       _mErr = other._mErr;
+      _trackingValid = other._trackingValid;
       
       return *this;
    }
@@ -439,15 +442,18 @@ public:
    Quaternion4f orientation() const { return _ori; }
    //! \brief Vector of markers that make up this RigidBody
    std::vector<Point3f> const& markers() const { return _markers; }
+   //! \brief True if the tracking is valid. Used in NatNet version >= 2.6.
+   bool trackingValid() const { return _trackingValid; }
    
    /*!
     * \brief Unpack rigid body data from raw packed data.
     * 
     * \param data pointer to packed data representing a RigidBody
     * \param nnMajor major version of NatNet used to construct the packed data
+    * \param nnMinor Minor version of NatNet packets used to read this frame
     * \returns pointer to data immediately following the RigidBody data
     */
-   char const* unpack(char const* data, char nnMajor)
+   char const* unpack(char const* data, char nnMajor, char nnMinor)
    {
       int i;
       float x,y,z;
@@ -474,8 +480,7 @@ public:
          memcpy(&z,data,4); data += 4;
          _markers.push_back(Point3f(x,y,z));
       }
-      
-      
+
       if( nnMajor >= 2 )
       {
          // Marker IDs
@@ -485,7 +490,7 @@ public:
             memcpy(&id,data,4); data += 4;
             _mId.push_back(id);
          }
-         
+
          // Marker sizes
          float size;
          for( i = 0; i < nMarkers; ++i )
@@ -493,7 +498,13 @@ public:
             memcpy(&size,data,4); data += 4;
             _mSize.push_back(size);
          }
-         
+
+         if( ((nnMajor==2) && (nnMinor >= 6)) || (nnMajor > 2) || (nnMajor == 0) )
+         {
+            uint16_t tmp;
+            memcpy(&tmp, data, 2); data += 2;
+            _trackingValid = tmp & 0x01;
+         }
          // Mean marker error
          memcpy(&_mErr,data,4); data += 4;
       }
@@ -515,6 +526,9 @@ private:
    std::vector<float> _mSize;
    // Mean marker error
    float _mErr;
+
+   // NOTE: If NatNet version >= 2.6
+   bool _trackingValid;
 };
 
 //! \brief Output operator for RigidBody.
@@ -650,9 +664,10 @@ public:
     * 
     * \param data pointer to packed data representing a Skeleton
     * \param nnMajor major version of NatNet used to construct the packed data
+    * \param nnMinor Minor version of NatNet packets used to read this frame
     * \returns pointer to data immediately following the Skeleton data
     */
-   char const* unpack( char const* data, char nnMajor )
+   char const* unpack( char const* data, char nnMajor, char nnMinor )
    {
       int i;
       int numRigid = 0;
@@ -662,7 +677,7 @@ public:
       for( i = 0; i < numRigid; ++i )
       {
          RigidBody b;
-         data = b.unpack( data, nnMajor );
+         data = b.unpack( data, nnMajor, nnMinor );
          _rBodies.push_back(b);
       }
       
@@ -910,7 +925,7 @@ public:
       for( i = 0; i < _numRigidBodies; ++i )
       {
          RigidBody b;
-         data = b.unpack(data, _nnMajor);
+         data = b.unpack(data, _nnMajor, _nnMinor);
          _rBodies.push_back(b);
       }
       
@@ -922,7 +937,7 @@ public:
          for( i = 0; i < numSkel; ++i )
          {
             Skeleton s;
-            data = s.unpack( data, _nnMajor );
+            data = s.unpack( data, _nnMajor, _nnMinor );
             _skel.push_back(s);
          }
       }
