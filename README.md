@@ -51,7 +51,7 @@ components:
     $ git clone https://github.com/rocketman768/NatNetLinux.git NatNetLinux
     $ mkdir build
     $ cd build
-    $ cmake ../NatNetLinux
+    $ cmake ..
     $ make
     $ sudo make install
 
